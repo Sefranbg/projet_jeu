@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz sur les pays de l'UE</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .flag-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .flag {
+            width: 303px;
+            height: 190px;
+            cursor: pointer;
+            border: 2px solid black; /* Bordure noire par défaut pour tous les drapeaux */
+        }
+        .flag.selected {
+            border: 2px solid #00FFFF; /* Bordure cyan pour la sélection */
+        }
+        .flag.correct-highlight {
+            border: 2px solid green;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { border-color: green; }
+            50% { border-color: transparent; }
+            100% { border-color: green; }
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #timer {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Quel est le drapeau de {{ correct_country }} ?</h1>
+    <div id="timer">Temps restant : 60 secondes</div>
+    <div class="flag-container">
+        {% for country in countries %}
+            <img src="{{ url_for('static', filename=country.flag) }}" 
+                 class="flag" 
+                 data-country="{{ country.name }}" 
+                 onclick="selectFlag(this, '{{ country.name }}')">
+        {% endfor %}
+    </div>
+    <button onclick="validate()">Valider le pays</button>
+    <button onclick="window.location.href='/'">Revenir à l'accueil</button>
+    <div id="result"></div>
+
+    <script>
+        let selectedCountry = null;
+        let timeLeft = 60;
+        let timerId;
+
+        function startTimer() {
+            timerId = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = `Temps restant : ${timeLeft} secondes`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerId);
+                    document.getElementById('result').innerHTML = 
+                        `<span class="incorrect">Temps écoulé ! Le bon pays était : {{ correct_country }}</span>`;
+                    highlightCorrectFlag();
+                    disableFlags();
+                }
+            }, 1000);
+        }
+
+        function selectFlag(element, country) {
+            document.querySelectorAll('.flag').forEach(flag => {
+                flag.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedCountry = country;
+        }
+
+        function validate() {
+            clearInterval(timerId);
+            const resultDiv = document.getElementById('result');
+            if (!selectedCountry) {
+                resultDiv.innerHTML = "Veuillez sélectionner un drapeau !";
+                return;
+            }
+            if (selectedCountry === "{{ correct_country }}") {
+                resultDiv.innerHTML = `<span class="correct">Bonne réponse !</span>`;
+            } else {
+                resultDiv.innerHTML = 
+                    `<span class="incorrect">Mauvaise réponse. Le bon pays était : {{ correct_country }}</span>`;
+                highlightCorrectFlag();
+            }
+            disableFlags();
+        }
+
+        function highlightCorrectFlag() {
+            document.querySelectorAll('.flag').forEach(flag => {
+                if (flag.getAttribute('data-country') === "{{ correct_country }}") {
+                    flag.classList.add('correct-highlight');
+                }
+            });
+        }
+
+        function disableFlags() {
+            document.querySelectorAll('.flag').forEach(flag => {
+                flag.style.cursor = 'default';
+                flag.onclick = null;
+            });
+            document.querySelector('button[onclick="validate()"]').disabled = true;
+        }
+
+        window.onload = startTimer;
+    </script>
+</body>
+</html>
