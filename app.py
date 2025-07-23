@@ -85,5 +85,6 @@ def quiz():
     return render_template('quiz.html', countries=countries, correct_country=correct_country)
 
 if __name__ == '__main__':
-    print("Démarrage du serveur Flask sur http://127.0.0.1:5000")
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))  # Utilise le port de Render ou 10000 par défaut
+    print(f"Démarrage du serveur Flask sur http://0.0.0.0:{port}")
+    app.run(host='0.0.0.0', port=port, debug=True)
